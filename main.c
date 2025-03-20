@@ -1,112 +1,221 @@
-// 1. Дана строка. Найти самое длинное слово  
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
 
-// Функция для чтения строки с клавиатуры
-void read_string(char** str) {
-    int size = 1; //начальный размер выделенной памяти для строки
-    int len = 0;
-    char ch;
-    char* temp;
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РѕР±РјРµРЅР° РґРІСѓС… СЌР»РµРјРµРЅС‚РѕРІ РІ С„Р°Р№Р»Рµ
+void swap_in_file(FILE* file, int pos1, int pos2) {
+    int num1, num2;
 
-    *str = (char*)malloc(size * sizeof(char)); // Выделение начальной памяти для строки
+    // Р§РёС‚Р°РµРј РїРµСЂРІС‹Р№ СЌР»РµРјРµРЅС‚
+    fseek(file, pos1 * sizeof(int), SEEK_SET);
+    fread(&num1, sizeof(int), 1, file);
 
-    if (*str == NULL) {
-        printf("Ошибка выделения памяти\n");
-        exit(1);
-    }
+    // Р§РёС‚Р°РµРј РІС‚РѕСЂРѕР№ СЌР»РµРјРµРЅС‚
+    fseek(file, pos2 * sizeof(int), SEEK_SET);
+    fread(&num2, sizeof(int), 1, file);
 
-    printf("Введите строку: ");
-    while ((ch = getchar()) != '\n') {
-        if (len >= size) {
-            size *= 2; // Удвоение размера
-            temp = (char*)malloc(size * sizeof(char)); // Выделение новой памяти
-            if (temp == NULL) {
-                printf("Ошибка выделения памяти\n");
-                exit(1);
-            }
-            for (int i = 0; i < len; i++) {
-                temp[i] = (*str)[i]; // Копирование старых данных в новый блок памяти
-            }
-            free(*str); 
-            *str = temp; // освобождение старой памяти и присвоение нового адреса
-        }
-        (*str)[len++] = ch; //Добавляет символ и увеличивает длину.
-    }
-    (*str)[len] = '\0'; // Завершаем строку нулевым символом
+    // РњРµРЅСЏРµРј РёС… РјРµСЃС‚Р°РјРё
+    fseek(file, pos1 * sizeof(int), SEEK_SET);
+    fwrite(&num2, sizeof(int), 1, file);
+    fseek(file, pos2 * sizeof(int), SEEK_SET);
+    fwrite(&num1, sizeof(int), 1, file);
 }
 
-// Функция для проверки, является ли символ пробелом
-int is_space(char c) {
-    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-}
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЃРѕСЂС‚РёСЂРѕРІРєРё СЌР»РµРјРµРЅС‚РѕРІ РІ С„Р°Р№Р»Рµ (РїСѓР·С‹СЂСЊРєРѕРІР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР°)
+void sort_file(FILE* file, int count) {
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            int num1, num2;
 
-// Функция для поиска самого длинного слова
-char* find_longest_word(const char* str) {
-    int max_length = 0;
-    int current_length = 0;
-    const char* max_start = NULL;
-    const char* current_start = NULL;
-    char* longest_word = NULL;
+            // РЎС‡РёС‚С‹РІР°РµРј РґРІР° СЃРѕСЃРµРґРЅРёС… СЌР»РµРјРµРЅС‚Р°
+            fseek(file, j * sizeof(int), SEEK_SET);
+            fread(&num1, sizeof(int), 1, file);
+            fread(&num2, sizeof(int), 1, file);
 
-    while (*str) {
-        if (!is_space(*str) && current_start == NULL) {
-            current_start = str; // Начало нового слова
-            current_length = 0;
-        }
-        //Завершение слова и обновление максимальной длины.
-        if (is_space(*str) || *(str + 1) == '\0') {
-            if (!is_space(*str)) current_length++; // если не пробел, то +1 к длине слова
-            if (current_start && current_length > max_length) {
-                max_length = current_length;
-                max_start = current_start;
+            // Р•СЃР»Рё СЌР»РµРјРµРЅС‚С‹ РІ РЅРµРїСЂР°РІРёР»СЊРЅРѕРј РїРѕСЂСЏРґРєРµ, РјРµРЅСЏРµРј РёС… РјРµСЃС‚Р°РјРё
+            if (num1 > num2) {
+                fseek(file, j * sizeof(int), SEEK_SET);
+                fwrite(&num2, sizeof(int), 1, file);
+                fwrite(&num1, sizeof(int), 1, file);
             }
-            current_start = NULL; // Конец слова
         }
-        else {
-            current_length++; 
-        }
-        str++; //Переход к следующему символу
     }
-
-
-    //копирование самого длинного слова
-    if (max_start) {
-        longest_word = (char*)malloc((max_length + 1) * sizeof(char));
-        if (longest_word == NULL) {
-            printf("Ошибка выделения памяти\n");
-            exit(1);
-        }
-        for (int i = 0; i < max_length; i++) {
-            longest_word[i] = max_start[i];
-        }
-        longest_word[max_length] = '\0'; // Завершаем строку нулевым символом
-    }
-
-
-    return longest_word;
 }
 
-int main() {
-    // Установка локали для поддержки русского языка
-    setlocale(LC_ALL, "Russian");
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕРґСЃС‡С‘С‚Р° РєРѕР»РёС‡РµСЃС‚РІР° С‡РёСЃРµР», РєСЂР°С‚РЅС‹С… Р·Р°РґР°РЅРЅРѕРјСѓ С‡РёСЃР»Сѓ
+int count_multiples(FILE* file, int count, int divisor) {
+    int multiple_count = 0;
 
-    char* str;
-    read_string(&str);
+    rewind(file); // РџРµСЂРµС…РѕРґ РІ РЅР°С‡Р°Р»Рѕ С„Р°Р№Р»Р°
+    for (int i = 0; i < count; i++) {
+        int num;
 
-    char* longest_word = find_longest_word(str);
-    if (longest_word) {
-        printf("Самое длинное слово: %s\n", longest_word);
-        free(longest_word); // Освобождение памяти, выделенной для самого длинного слова
+        // РЎС‡РёС‚С‹РІР°РµРј С‡РёСЃР»Рѕ Рё РїСЂРѕРІРµСЂСЏРµРј РєСЂР°С‚РЅРѕСЃС‚СЊ
+        fread(&num, sizeof(int), 1, file);
+        if (num % divisor == 0) {
+            multiple_count++;
+        }
     }
-    else {
-        printf("В строке нет слов.\n");
+    return multiple_count;
+}
+
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ С†РёРєР»РёС‡РµСЃРєРѕРіРѕ СЃРґРІРёРіР° СЌР»РµРјРµРЅС‚РѕРІ РЅР° k РїРѕР·РёС†РёР№ РІРїСЂР°РІРѕ
+void rotate_file(FILE* file, int count, int k) {
+    k %= count; // РЈР±РµРґРёРјСЃСЏ, С‡С‚Рѕ k РјРµРЅСЊС€Рµ РґР»РёРЅС‹
+
+    // Р’С‹РїРѕР»РЅСЏРµРј СЃРґРІРёРі k СЂР°Р·
+    for (int i = 0; i < k; i++) {
+        int last;
+
+        // РЎС‡РёС‚С‹РІР°РµРј РїРѕСЃР»РµРґРЅРёР№ СЌР»РµРјРµРЅС‚
+        fseek(file, (count - 1) * sizeof(int), SEEK_SET);
+        fread(&last, sizeof(int), 1, file);
+
+        // РЎРґРІРёРіР°РµРј СЌР»РµРјРµРЅС‚С‹ РІРїСЂР°РІРѕ
+        for (int j = count - 1; j > 0; j--) {
+            int current;
+
+            fseek(file, (j - 1) * sizeof(int), SEEK_SET);
+            fread(&current, sizeof(int), 1, file);
+
+            fseek(file, j * sizeof(int), SEEK_SET);
+            fwrite(&current, sizeof(int), 1, file);
+        }
+
+        // РџРѕРјРµС‰Р°РµРј РїРѕСЃР»РµРґРЅРёР№ СЌР»РµРјРµРЅС‚ РІ РЅР°С‡Р°Р»Рѕ
+        fseek(file, 0, SEEK_SET);
+        fwrite(&last, sizeof(int), 1, file);
+    }
+}
+
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ Р·Р°РјРµРЅС‹ РІСЃРµС… РїРѕРІС‚РѕСЂСЏСЋС‰РёС…СЃСЏ СЌР»РµРјРµРЅС‚РѕРІ РЅР° 0
+void replace_duplicates_with_zero(FILE* file, int count) {
+    rewind(file); // РџРµСЂРµС…РѕРґ РІ РЅР°С‡Р°Р»Рѕ С„Р°Р№Р»Р°
+    for (int i = 0; i < count; i++) {
+        int num1;
+
+        // РЎС‡РёС‚С‹РІР°РµРј С‚РµРєСѓС‰РёР№ СЌР»РµРјРµРЅС‚
+        fseek(file, i * sizeof(int), SEEK_SET);
+        fread(&num1, sizeof(int), 1, file);
+
+        // РџСЂРѕРІРµСЂСЏРµРј РЅР° РїРѕРІС‚РѕСЂС‹ СЃСЂРµРґРё СЃР»РµРґСѓСЋС‰РёС… СЌР»РµРјРµРЅС‚РѕРІ
+        for (int j = i + 1; j < count; j++) {
+            int num2;
+
+            fseek(file, j * sizeof(int), SEEK_SET);
+            fread(&num2, sizeof(int), 1, file);
+
+            if (num1 == num2 && num1 != 0) {
+                // Р•СЃР»Рё РЅР°Р№РґРµРЅ РґСѓР±Р»РёРєР°С‚, Р·Р°РјРµРЅСЏРµРј РµРіРѕ РЅР° 0
+                fseek(file, j * sizeof(int), SEEK_SET);
+                int zero = 0;
+                fwrite(&zero, sizeof(int), 1, file);
+            }
+        }
+    }
+}
+
+// Р“Р»Р°РІРЅР°СЏ С„СѓРЅРєС†РёСЏ РїСЂРѕРіСЂР°РјРјС‹
+int main(int argc, char* argv[]) {
+    setlocale(LC_ALL, "rus"); // РЈСЃС‚Р°РЅРѕРІРєР° Р»РѕРєР°Р»Рё РґР»СЏ РїРѕРґРґРµСЂР¶РєРё СЂСѓСЃСЃРєРѕРіРѕ СЏР·С‹РєР°
+
+    // РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ РёРјРµРЅРё С„Р°Р№Р»Р° РІ Р°СЂРіСѓРјРµРЅС‚Р°С… РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё
+    if (argc < 2) {
+        printf("РЈРєР°Р¶РёС‚Рµ РёРјСЏ С„Р°Р№Р»Р° РєР°Рє РїРµСЂРІС‹Р№ Р°СЂРіСѓРјРµРЅС‚ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё.\n");
+        return 1;
     }
 
-    free(str); // Освобождение памяти, выделенной для строки
+    FILE* file;
+    // РћС‚РєСЂС‹РІР°РµРј С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё Рё С‡С‚РµРЅРёСЏ
+    fopen_s(&file, argv[1], "wb+");
+    if (!file) {
+        printf("РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р».\n");
+        return 1;
+    }
+
+    printf("Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ С‡РёСЃРµР»: ");
+    int n;
+    scanf_s("%d", &n);
+
+    // Р—Р°РїРёСЃСЊ С‡РёСЃРµР» РІ С„Р°Р№Р»
+    printf("Р’РІРµРґРёС‚Рµ РЅР°С‚СѓСЂР°Р»СЊРЅС‹Рµ С‡РёСЃР»Р°:\n");
+    for (int i = 0; i < n; i++) {
+        int num;
+        scanf_s("%d", &num);
+        fwrite(&num, sizeof(int), 1, file);
+    }
+
+    // Р§С‚РµРЅРёРµ Рё РІС‹РІРѕРґ С‡РёСЃРµР» РёР· С„Р°Р№Р»Р°
+    printf("Р§РёСЃР»Р° РёР· С„Р°Р№Р»Р°:\n");
+    rewind(file);
+    for (int i = 0; i < n; i++) {
+        int num;
+        fread(&num, sizeof(int), 1, file);
+        printf("%d ", num);
+    }
+    printf("\n");
+
+    // РћР±РјРµРЅ СЌР»РµРјРµРЅС‚РѕРІ РїРѕ СѓРєР°Р·Р°РЅРЅС‹Рј РїРѕР·РёС†РёСЏРј
+    printf("Р’РІРµРґРёС‚Рµ РїРѕР·РёС†РёРё РґР»СЏ РѕР±РјРµРЅР° (РѕС‚ 0 РґРѕ %d):\n", n - 1);
+    int pos1, pos2;
+    scanf_s("%d %d", &pos1, &pos2);
+    swap_in_file(file, pos1, pos2);
+
+    // Р’С‹РІРѕРґ РїРѕСЃР»Рµ РѕР±РјРµРЅР°
+    printf("Р¤Р°Р№Р» РїРѕСЃР»Рµ РѕР±РјРµРЅР° СЌР»РµРјРµРЅС‚РѕРІ:\n");
+    rewind(file);
+    for (int i = 0; i < n; i++) {
+        int num;
+        fread(&num, sizeof(int), 1, file);
+        printf("%d ", num);
+    }
+    printf("\n");
+
+    // РЎРѕСЂС‚РёСЂРѕРІРєР° С„Р°Р№Р»Р°
+    sort_file(file, n);
+    printf("Р¤Р°Р№Р» РїРѕСЃР»Рµ СЃРѕСЂС‚РёСЂРѕРІРєРё:\n");
+    rewind(file);
+    for (int i = 0; i < n; i++) {
+        int num;
+        fread(&num, sizeof(int), 1, file);
+        printf("%d ", num);
+    }
+    printf("\n");
+
+    // РџРѕРґСЃС‡С‘С‚ РєСЂР°С‚РЅС‹С… С‡РёСЃРµР»
+    printf("Р’РІРµРґРёС‚Рµ С‡РёСЃР»Рѕ РґР»СЏ РїРѕРґСЃС‡С‘С‚Р° РєСЂР°С‚РЅС‹С… РµРјСѓ:\n");
+    int divisor;
+    scanf_s("%d", &divisor);
+    int multiples = count_multiples(file, n, divisor);
+    printf("РљРѕР»РёС‡РµСЃС‚РІРѕ С‡РёСЃРµР», РєСЂР°С‚РЅС‹С… %d: %d\n", divisor, multiples);
+
+    // Р’С‹РїРѕР»РЅРµРЅРёРµ С†РёРєР»РёС‡РµСЃРєРѕРіРѕ СЃРґРІРёРіР°
+    printf("Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕР·РёС†РёР№ РґР»СЏ С†РёРєР»РёС‡РµСЃРєРѕРіРѕ СЃРґРІРёРіР° РІРїСЂР°РІРѕ: ");
+    int k;
+    scanf_s("%d", &k);
+    rotate_file(file, n, k);
+
+    // Р’С‹РІРѕРґ РїРѕСЃР»Рµ СЃРґРІРёРіР°
+    printf("Р¤Р°Р№Р» РїРѕСЃР»Рµ С†РёРєР»РёС‡РµСЃРєРѕРіРѕ СЃРґРІРёРіР° РЅР° %d РїРѕР·РёС†РёРё:\n", k);
+    rewind(file);
+    for (int i = 0; i < n; i++) {
+        int num;
+        fread(&num, sizeof(int), 1, file);
+        printf("%d ", num);
+    }
+    printf("\n");
+
+    // Р—Р°РјРµРЅР° РїРѕРІС‚РѕСЂСЏСЋС‰РёС…СЃСЏ С‡РёСЃРµР» РЅР° 0
+    replace_duplicates_with_zero(file, n);
+    printf("Р¤Р°Р№Р» РїРѕСЃР»Рµ Р·Р°РјРµРЅС‹ РїРѕРІС‚РѕСЂРѕРІ РЅР° 0:\n");
+    rewind(file);
+    for (int i = 0; i < n; i++) {
+        int num;
+        fread(&num, sizeof(int), 1, file);
+        printf("%d ", num);
+    }
+    printf("\n");
+
+    fclose(file); // Р—Р°РєСЂС‹С‚РёРµ С„Р°Р№Р»Р°
     return 0;
 }
-
-//является ли следующий символ концом строки 
-//max_length + 1: Добавляется 1, чтобы учесть нулевой символ \0, который обозначает конец строки.
